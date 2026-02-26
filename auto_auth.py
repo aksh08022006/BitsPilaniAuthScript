@@ -103,6 +103,16 @@ def parse_args() -> argparse.Namespace:
         help="Check interval in seconds (default: 60)",
     )
     parser.add_argument(
+        "--run-once",
+        action="store_true",
+        help="Run one connectivity/login cycle and exit (setup validation mode)",
+    )
+    parser.add_argument(
+        "--force-login",
+        action="store_true",
+        help="Attempt login immediately without waiting for connectivity failure",
+    )
+    parser.add_argument(
         "--verbose",
         action="store_true",
         help="Enable verbose logs",
@@ -122,7 +132,6 @@ def internet_up(check_url: str, timeout: int, verbose: bool) -> bool:
             final_url = resp.geturl()
             status = getattr(resp, "status", 200)
 
-            # Typical connectivity checks return 204. 200 is acceptable too.
             if verbose:
                 log(
                     f"Connectivity probe status={status}, final_url={final_url}",
@@ -132,12 +141,12 @@ def internet_up(check_url: str, timeout: int, verbose: bool) -> bool:
             original_host = urllib.parse.urlsplit(check_url).netloc
             final_host = urllib.parse.urlsplit(final_url).netloc
 
-            # If we got redirected to a different host, it's likely captive portal.
+            # Redirect to a different host generally indicates captive portal.
             if final_host and original_host and final_host != original_host:
                 return False
 
             return status in (200, 204)
-    except Exception as exc:  # network errors/timeouts
+    except Exception as exc:
         if verbose:
             log(f"Connectivity probe failed: {exc}", verbose)
         return False
@@ -157,7 +166,7 @@ def attempt_login(config: AuthConfig) -> bool:
         method="POST",
         headers={
             "Content-Type": "application/x-www-form-urlencoded",
-            "User-Agent": "CampusAutoAuth/1.0",
+            "User-Agent": "CampusAutoAuth/1.1",
         },
     )
 
@@ -171,7 +180,6 @@ def attempt_login(config: AuthConfig) -> bool:
             if config.success_text:
                 return config.success_text in body
 
-            # Heuristic fallback: treat 2xx as successful submission.
             return 200 <= status < 300
     except Exception as exc:
         log(f"Login attempt failed: {exc}", True)
@@ -205,21 +213,33 @@ def build_config(ns: argparse.Namespace) -> AuthConfig:
     )
 
 
-def run_loop(config: AuthConfig) -> None:
+def run_cycle(config: AuthConfig, force_login: bool = False) -> bool:
+    if not force_login and internet_up(config.check_url, config.timeout, config.verbose):
+        log("Internet is active. No login action needed.", True)
+        return True
+
+    log("Internet appears offline/captive (or forced login). Trying portal login...", True)
+    login_ok = attempt_login(config)
+    if not login_ok:
+        log("Portal login may have failed.", True)
+        return False
+
+    log("Portal login submitted successfully.", True)
+    time.sleep(min(5, config.interval))
+
+    if internet_up(config.check_url, config.timeout, config.verbose):
+        log("Post-login connectivity check passed.", True)
+        return True
+
+    log("Login submitted but connectivity is still not confirmed.", True)
+    return False
+
+
+def run_loop(config: AuthConfig, force_login: bool = False) -> None:
     log("Auto-auth loop started.", True)
     while True:
-        if internet_up(config.check_url, config.timeout, config.verbose):
-            if config.verbose:
-                log("Internet is active. No action needed.", config.verbose)
-        else:
-            log("Internet appears offline/captive. Trying portal login...", True)
-            if attempt_login(config):
-                log("Portal login submitted successfully.", True)
-                # short cool-down before next full interval to allow route updates
-                time.sleep(min(10, config.interval))
-            else:
-                log("Portal login may have failed. Will retry on next cycle.", True)
-
+        run_cycle(config, force_login=force_login)
+        force_login = False
         time.sleep(config.interval)
 
 
@@ -232,10 +252,14 @@ def main() -> int:
         return 2
 
     try:
-        run_loop(config)
+        if ns.run_once:
+            ok = run_cycle(config, force_login=ns.force_login)
+            return 0 if ok else 1
+        run_loop(config, force_login=ns.force_login)
     except KeyboardInterrupt:
         log("Stopped by user.", True)
         return 0
+    return 0
 
 
 if __name__ == "__main__":
