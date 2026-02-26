@@ -2,7 +2,6 @@
 
 A reusable Python script for students to automatically re-authenticate on a campus captive portal/firewall when sessions expire.
 
-> Use only for your own authorized account and only if your institute allows automation.
 
 ## 1) What this solves
 
