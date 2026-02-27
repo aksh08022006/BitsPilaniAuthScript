@@ -1,0 +1,29 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Start BITS keepalive",
+			"type": "shell",
+			"command": "cd /Users/akshkaushik/Desktop/BitsPilaniAuthScript && if [ -f ~/.config/bits-keepalive/credentials.env ]; then nohup ./bits_keepalive.sh > bits_keepalive.log 2>&1 & echo started; else echo missing_credentials; fi",
+			"isBackground": false
+		},
+		{
+			"label": "BITS setup credentials",
+			"type": "shell",
+			"command": "cd /Users/akshkaushik/Desktop/BitsPilaniAuthScript && ./bits_keepalive.sh --setup",
+			"isBackground": false
+		},
+		{
+			"label": "Fix git push for main",
+			"type": "shell",
+			"command": "cd /Users/akshkaushik/Desktop/BitsPilaniAuthScript && git status --porcelain && git pull --rebase origin main && git push origin main",
+			"isBackground": false
+		},
+		{
+			"label": "Commit then rebase push",
+			"type": "shell",
+			"command": "cd /Users/akshkaushik/Desktop/BitsPilaniAuthScript && git add -A && git commit -m \"Update README and keepalive improvements\" && git pull --rebase origin main && git push origin main",
+			"isBackground": false
+		}
+	]
+}
