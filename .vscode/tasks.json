@@ -24,6 +24,12 @@
 			"type": "shell",
 			"command": "cd /Users/akshkaushik/Desktop/BitsPilaniAuthScript && git add -A && git commit -m \"Update README and keepalive improvements\" && git pull --rebase origin main && git push origin main",
 			"isBackground": false
+		},
+		{
+			"label": "Continue rebase and push",
+			"type": "shell",
+			"command": "cd /Users/akshkaushik/Desktop/BitsPilaniAuthScript && git add README.md auto_auth.py bits_keepalive.sh .vscode/tasks.json bits_keepalive.log && GIT_EDITOR=true git rebase --continue && git push origin main",
+			"isBackground": false
 		}
 	]
 }
