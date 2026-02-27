@@ -18,11 +18,23 @@ Special credits to chrome developer tools and eyesight lol.
 - Next runs do not ask again unless you run reset mode.
 - After setup, running the script keeps refreshing the session timer automatically.
 
-## How to clone
+## Option 1 — Direct Clone (Recommended)
 
+No fork required if you just want to use it.
+```bash
+git clone https://github.com/aksh08022006/BitsPilaniAuthScript.git
+cd BitsPilaniAuthScript
+chmod +x bits_keepalive.sh
+```
+# Option 2 — Fork (If You Want to Contribute)
+
+Click Fork on GitHub
+
+Clone your fork:
 ```bash
 git clone https://github.com/<your-username>/BitsPilaniAuthScript.git
 cd BitsPilaniAuthScript
+chmod +x bits_keepalive.sh
 ```
 
 ## How to use
