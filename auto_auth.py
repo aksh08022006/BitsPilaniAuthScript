@@ -27,7 +27,7 @@ class AuthConfig:
     username: str
     password: str
     username_field: str = "F20240903"
-    password_field: str = "F20278506#"
+    password_field: str = "F20278508#"
     extra_fields: Dict[str, str] = field(default_factory=dict)
     check_url: str = "http://clients3.google.com/generate_204"
     timeout: int = 8
